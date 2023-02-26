@@ -23,8 +23,11 @@ fn main() {
         let sw = Instant::now();
         for i in 0..n {
             for j in 0..(n - 1 - i) {
-                (matrix[i][j], matrix[n - 1 - j][n - 1 - i]) =
-                    (matrix[n - 1 - j][n - 1 - i], matrix[i][j]);
+                unsafe {
+                    let a: *mut i32 = &mut matrix[i][j];
+                    let b: *mut i32 = &mut matrix[n - 1 - j][n - 1 - i];
+                    std::ptr::swap(a, b);
+                }
             }
         }
 
@@ -48,7 +51,11 @@ fn main() {
 
                     let mut phantom_matrix;
                     unsafe {
-                        phantom_matrix = Vec::from_raw_parts(matrix.as_mut_ptr(), matrix.len(), matrix.capacity());
+                        phantom_matrix = Vec::from_raw_parts(
+                            matrix.as_mut_ptr(),
+                            matrix.len(),
+                            matrix.capacity(),
+                        );
                     };
 
                     s.spawn(move || {
@@ -82,9 +89,14 @@ fn thread_with_state(begin: usize, mut count: usize, matrix: &mut Vec<Vec<i32>>)
         i += 1;
 
         for j in 0..(n - 1 - i) {
-            if count == 0 { break }
-            (matrix[i][j], matrix[n - 1 - j][n - 1 - i]) =
-                (matrix[n - 1 - j][n - 1 - i], matrix[i][j]);
+            if count == 0 {
+                break;
+            }
+            unsafe {
+                let a: *mut i32 = &mut matrix[i][j];
+                let b: *mut i32 = &mut matrix[n - 1 - j][n - 1 - i];
+                std::ptr::swap(a, b);
+            }
             count -= 1;
         }
     }
