@@ -44,7 +44,7 @@ fn main() {
                         count = total_count - (thread_count - 1) * count;
                     }
 
-                    println!("Begin: {begin}, count: {count}.");
+                    // println!("Begin: {begin}, count: {count}.");
 
                     let mut phantom_matrix;
                     unsafe {
@@ -60,7 +60,7 @@ fn main() {
             });
 
             let elapsed = sw.elapsed();
-            println!("Dividing into {thread_count} threads and executing took {elapsed:?} ms.");
+            println!("Dividing into {thread_count} threads and executing took {elapsed:?}.");
         }
     }
 }
@@ -82,9 +82,10 @@ fn thread_with_state(begin: usize, mut count: usize, matrix: &mut Vec<Vec<i32>>)
         i += 1;
 
         for j in 0..(n - 1 - i) {
+            if count == 0 { break }
             (matrix[i][j], matrix[n - 1 - j][n - 1 - i]) =
                 (matrix[n - 1 - j][n - 1 - i], matrix[i][j]);
-            count -= 1; // Bug
+            count -= 1;
         }
     }
 }
