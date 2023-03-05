@@ -1,5 +1,6 @@
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use std::time::Instant;
+use std::sync::{Arc, Barrier};
 use array2d::Array2D;
 
 fn main() {
@@ -49,6 +50,8 @@ fn main() {
             let total_count = n * (n - 1) / 2;
             let mut count = total_count / thread_count;
 
+            let barrier = Arc::new(Barrier::new(thread_count));
+
             std::thread::scope(|s| {
                 for i in 0..thread_count {
                     let begin = i * count;
@@ -63,7 +66,9 @@ fn main() {
                         matrix_ptr = shared_ptr.as_mut().unwrap_unchecked();
                     }
 
+                    let c = barrier.clone();
                     s.spawn(move || {
+                        c.wait();
                         thread_with_state(begin, count, matrix_ptr);
                     });
                 }
