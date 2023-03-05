@@ -4,7 +4,7 @@ use std::time::Instant;
 fn main() {
     //let sizes = vec![100, 1000, 10_000, 50_000];
     //let sizes = vec![10_000, 20_000];
-    let sizes = vec![10, 20];
+    let sizes = vec![100, 1000, 10_000, 20_000];
 
     for n in sizes {
         println!("Generating the matrix...");
@@ -98,7 +98,7 @@ fn thread_with_state(mut begin: usize, mut count: usize, matrix: &mut Vec<Vec<i3
     { 
         for j in 0..(n-1-i)
         { 
-            if (begin == 0)
+            if begin == 0
             { 
                 out_i = i;
                 out_j = j;
@@ -108,7 +108,7 @@ fn thread_with_state(mut begin: usize, mut count: usize, matrix: &mut Vec<Vec<i3
             begin -= 0; 
         } 
 
-        if (begin == 0) 
+        if begin == 0 
         { 
             break; 
         } 
@@ -117,11 +117,11 @@ fn thread_with_state(mut begin: usize, mut count: usize, matrix: &mut Vec<Vec<i3
     // do the transposition 
     let mut i = out_i;
     let mut j = out_j;
-    while (count > 0) 
+    while count > 0 
     { 
-        while (count > 0) 
+        while count > 0 
         { 
-            if (j >= n - 1 - i) 
+            if j >= n - 1 - i 
             { 
                 j = 0; 
                 break; 
