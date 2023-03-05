@@ -4,16 +4,19 @@ using System.Threading;
  
 var rand = new Random(); 
  
-var sizes = new[] { 100, 1000, 10_000, 50_000 }; 
+var sizes = new[] { 100, 1000, 10000, 20000 }; 
  
 foreach (var n in sizes)  
 { 
+    Console.WriteLine("Generating the matrix..."); 
     var matrix = new float[n, n]; 
+    var originalMatrix = new float[n, n]; 
     for (var i = 0; i < n; i++)  
     { 
         for (var j = 0; j < n; j++) 
         { 
             matrix[i, j] = rand.Next(10); 
+            originalMatrix[i, j] = matrix[i, j]; 
         } 
     } 
  
@@ -30,10 +33,19 @@ foreach (var n in sizes)
     } 
  
     sw.Stop(); 
-    Console.WriteLine($"Time taken: {(float) sw.Elapsed.Microseconds / 1_000} ms."); 
+    Console.WriteLine($"Time taken: {sw.Elapsed.TotalMilliseconds} ms."); 
  
-    for (var threadCount = 2; threadCount <= 3; threadCount++) 
+    for (var threadCount = 4; threadCount <= 128; threadCount *= 2) 
     { 
+        // reset the matrix 
+        for (var i = 0; i < n; i++) 
+        { 
+            for (var j = 0; j < n; j++) 
+            { 
+                matrix[i, j] = originalMatrix[i, j]; 
+            } 
+        } 
+ 
         sw.Restart(); 
  
         long totalCount = (long) n * (n - 1) / 2; 
@@ -47,7 +59,6 @@ foreach (var n in sizes)
                 count = totalCount - (threadCount - 1) * count; 
             } 
  
-            Console.WriteLine($"Begin: {begin}, count: {count}."); 
             var tws = new ThreadWithState(matrix, begin, count); 
             threads[i] = new Thread(tws.ThreadProc); 
             threads[i].Start(); 
@@ -60,7 +71,24 @@ foreach (var n in sizes)
  
         sw.Stop(); 
         Console.WriteLine($"Dividing into {threadCount} threads and executing took " 
-                          + $"{(float) sw.Elapsed.Microseconds / 1_000} ms."); 
+                          + $"{sw.Elapsed.TotalMilliseconds} ms."); 
+         
+        // check correctness 
+        var incorrectCounter = 0; 
+        for (var i = 0; i < n; i++) 
+        { 
+            for (var j = 0; j < n - 1 - i; j++) { 
+                if (matrix[i, j] != originalMatrix[n - 1 - j, n - 1 - i]) 
+                { 
+                    incorrectCounter++; 
+                } 
+            } 
+        } 
+ 
+        if (incorrectCounter != 0) 
+        { 
+            Console.WriteLine($"{incorrectCounter} incorrect"); 
+        } 
     } 
 } 
  
@@ -80,22 +108,47 @@ public class ThreadWithState
  
     public void ThreadProc()  
     { 
-        var iBegin = begin / n; 
-        var jBegin = begin % n; 
+        // find the beginning 
+        int i = 0; 
+        int j = 0; 
  
-        for (var j = jBegin; j < n - 1 - iBegin; j++)  
+        for (i = 0; i < n; i++) 
         { 
-            (matrix[iBegin, j], matrix[n - 1 - j, n - 1 - iBegin]) = (matrix[n - 1 - j, n - 1 - iBegin], matrix[iBegin, j]); 
-            count--; 
+            for (j = 0; j < n - 1 - i; j++) 
+            { 
+                if (begin == 0)  
+                { 
+                    break; 
+                } 
+ 
+                begin--; 
+            } 
+ 
+            if (begin == 0) 
+            { 
+                break; 
+            } 
         } 
  
-        for (var i = iBegin + 1; count > 0; i++) 
+        // do the transposition 
+        while (count > 0) 
         { 
-            for (var j = 0; j < n - 1 - i; j++)  
+            while (count > 0) 
             { 
-                (matrix[i, j], matrix[n - 1 - j, n - 1 - i]) = (matrix[n - 1 - j, n - 1 - i], matrix[i, j]); 
+                if (j >= n - 1 - i) 
+                { 
+                    j = 0; 
+                    break; 
+                } 
+ 
+                (matrix[i, j], matrix[n - 1 - j, n - 1 - i])  
+                    = (matrix[n - 1 - j, n - 1 - i], matrix[i, j]); 
+ 
                 count--; 
+                j++; 
             } 
+ 
+            i++; 
         } 
     } 
 }
