@@ -1,5 +1,6 @@
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use std::time::Instant;
+use array2d::Array2D;
 
 fn main() {
     //let sizes = vec![100, 1000, 10_000, 50_000];
@@ -8,14 +9,14 @@ fn main() {
 
     for n in sizes {
         println!("Generating the matrix...");
-        let mut matrix = vec![vec![0; n]; n];
+        let mut matrix = Array2D::filled_with(0, n, n);
 
         let start_gen = Instant::now();
         let mut rng = SmallRng::from_entropy();
 
         for i in 0..n {
             for j in 0..n {
-                matrix[i][j] = rng.gen_range(0..=10);
+                matrix[(i, j)] = rng.gen_range(0..=10);
             }
         }
         let original_matrix = matrix.clone();
@@ -30,8 +31,8 @@ fn main() {
         for i in 0..n {
             for j in 0..(n - 1 - i) {
                 unsafe {
-                    let a: *mut i32 = &mut *matrix.get_unchecked_mut(i).get_unchecked_mut(j);
-                    let b: *mut i32 = &mut *matrix.get_unchecked_mut(n - 1 - j).get_unchecked_mut(n - 1 - i);
+                    let a: *mut i32 = &mut *matrix.get_mut(i, j).unwrap_unchecked();
+                    let b: *mut i32 = &mut *matrix.get_mut(n - 1 - j, n - 1 - i).unwrap_unchecked();
                     std::ptr::swap(a, b);
                 }
             }
@@ -56,8 +57,8 @@ fn main() {
                         count = total_count - (thread_count - 1) * count;
                     }
 
-                    let shared_ptr: *mut Vec<Vec<i32>> = &mut matrix;
-                    let matrix_ptr: &mut Vec<Vec<i32>>;
+                    let shared_ptr: *mut _= &mut matrix;
+                    let matrix_ptr: &mut _;
                     unsafe {
                         matrix_ptr = shared_ptr.as_mut().unwrap_unchecked();
                     }
@@ -75,7 +76,7 @@ fn main() {
 
             for i in 0..n {
                 for j in 0..n {
-                    if matrix[i][j] != original_matrix[n - 1 - j][n - 1 - i] {
+                    if matrix[(i, j)] != original_matrix[(n - 1 - j, n - 1 - i)] {
                         incorrect_counter += 1;
                     }
                 }
@@ -89,8 +90,8 @@ fn main() {
     }
 }
 
-fn thread_with_state(mut begin: usize, mut count: usize, matrix: &mut Vec<Vec<i32>>) {
-        let n = matrix.len();
+fn thread_with_state(mut begin: usize, mut count: usize, matrix: &mut Array2D<i32>) {
+        let n = matrix.column_len();
 
         // find the beginning 
         let mut i = 0; 
@@ -129,8 +130,8 @@ fn thread_with_state(mut begin: usize, mut count: usize, matrix: &mut Vec<Vec<i3
                 } 
  
                 unsafe{ 
-                    let a: *mut i32 = &mut *matrix.get_unchecked_mut(i).get_unchecked_mut(j);
-                    let b: *mut i32 = &mut *matrix.get_unchecked_mut(n - 1 - j).get_unchecked_mut(n - 1 - i);
+                    let a: *mut i32 = &mut *matrix.get_mut(i, j).unwrap_unchecked();
+                    let b: *mut i32 = &mut *matrix.get_mut(n - 1 - j, n - 1 - i).unwrap_unchecked();
                     std::ptr::swap(a, b);
                 }
  
