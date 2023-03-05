@@ -30,8 +30,8 @@ fn main() {
         for i in 0..n {
             for j in 0..(n - 1 - i) {
                 unsafe {
-                    let a: *mut i32 = &mut matrix[i][j];
-                    let b: *mut i32 = &mut matrix[n - 1 - j][n - 1 - i];
+                    let a: *mut i32 = &mut *matrix.get_unchecked_mut(i).get_unchecked_mut(j);
+                    let b: *mut i32 = &mut *matrix.get_unchecked_mut(n - 1 - j).get_unchecked_mut(n - 1 - i);
                     std::ptr::swap(a, b);
                 }
             }
@@ -129,8 +129,8 @@ fn thread_with_state(mut begin: usize, mut count: usize, matrix: &mut Vec<Vec<i3
                 } 
  
                 unsafe{ 
-                    let a: *mut i32 = &mut matrix[i][j];
-                    let b: *mut i32 = &mut matrix[n - 1 - j][n - 1 - i];
+                    let a: *mut i32 = &mut *matrix.get_unchecked_mut(i).get_unchecked_mut(j);
+                    let b: *mut i32 = &mut *matrix.get_unchecked_mut(n - 1 - j).get_unchecked_mut(n - 1 - i);
                     std::ptr::swap(a, b);
                 }
  
